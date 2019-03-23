@@ -12,6 +12,8 @@ namespace graphics {
 	public:
 		Window();
 
+		inline Renderer *getRenderer() { return renderer; }
+
 		void init();
 	};
 

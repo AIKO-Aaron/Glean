@@ -14,8 +14,6 @@
 
 #include "Renderer.h"
 
-#define NUM_FRAMEBUFFERS 3
-
 using namespace graphics;
 using namespace Microsoft::WRL;
 
@@ -52,8 +50,7 @@ Renderer::Renderer(HWND window) {
 	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
-	ComPtr<ID3D12CommandQueue> commandQueue;
-	res = device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue));
+	res = device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&rd.commandQueue));
 	if (res < 0) printf("[ERROR] Error creating a commandqueuedesc for DirectX\n");
 
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
@@ -73,32 +70,70 @@ Renderer::Renderer(HWND window) {
 	fullscreenDesc.Windowed = TRUE;
 
 	ComPtr<IDXGISwapChain1> tmpSwapChain;
-	res = factory->CreateSwapChainForHwnd(commandQueue.Get(), window, &swapChainDesc, &fullscreenDesc, nullptr, &tmpSwapChain);
+	res = factory->CreateSwapChainForHwnd(rd.commandQueue.Get(), window, &swapChainDesc, &fullscreenDesc, nullptr, &tmpSwapChain);
 	if (res < 0) printf("[ERROR] Error creating a swap chain for DirectX %.08X\n", res);
 
-	ComPtr<IDXGISwapChain3> swapChain;
-	if(tmpSwapChain.As(&swapChain) < 0) printf("[ERROR] Error creating a IDXGISwapChain3 for DirectX (Was NULL after casting)\n");
-	UINT currentBuffer = swapChain->GetCurrentBackBufferIndex();
+	if(tmpSwapChain.As(&rd.swapChain) < 0) printf("[ERROR] Error creating a IDXGISwapChain3 for DirectX (Was NULL after casting)\n");
+	rd.frameIndex = rd.swapChain->GetCurrentBackBufferIndex();
 
 
-	ComPtr<ID3D12DescriptorHeap> rtvHeap;
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
 	rtvHeapDesc.NumDescriptors = NUM_FRAMEBUFFERS;
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap));
-	UINT size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rd.rtvHeap));
+	rd.size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvHeap->GetCPUDescriptorHandleForHeapStart());
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rd.rtvHeap->GetCPUDescriptorHandleForHeapStart());
 
-	ComPtr<ID3D12Resource> renderTargets[NUM_FRAMEBUFFERS];
 	for (int i = 0; i < NUM_FRAMEBUFFERS; i++) {
-		swapChain->GetBuffer(i, IID_PPV_ARGS(&renderTargets[i]));
-		device->CreateRenderTargetView(renderTargets[i].Get(), nullptr, rtvHandle);
-		rtvHandle.Offset(1, size);
+		rd.swapChain->GetBuffer(i, IID_PPV_ARGS(&rd.renderTargets[i]));
+		device->CreateRenderTargetView(rd.renderTargets[i].Get(), nullptr, rtvHandle);
+		rtvHandle.Offset(1, rd.size);
 	}
 
-	ComPtr<ID3D12CommandAllocator> commandAllocator;
-	res = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator));
+	res = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&rd.commandAllocator));
 	if (res < 0) printf("[ERROR] Error creating a command allocator for DirectX\n");
+
+	/**
+	*	Now for the assets:
+	*/
+
+	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
+	rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	ComPtr<ID3DBlob> signature;
+	ComPtr<ID3DBlob> error;
+	D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
+	device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rd.rootSignature));
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+	psoDesc.pRootSignature = rd.rootSignature.Get();
+
+	device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&rd.pipelineState));
+
+	device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, rd.commandAllocator.Get(), rd.pipelineState.Get(), IID_PPV_ARGS(&rd.commandList));
+	rd.commandList->Close();
+}
+
+void Renderer::swapBuffers() {
+	// Execute commands in queue
+	ID3D12CommandList* ppCommandLists[] = { rd.commandList.Get() };
+	rd.commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+	// Swap buffers
+	rd.swapChain->Present(1, 0);
+
+	rd.commandAllocator->Reset();
+	rd.commandList->Reset(rd.commandAllocator.Get(), rd.pipelineState.Get());
+
+	rd.commandList->SetGraphicsRootSignature(rd.rootSignature.Get());
+}
+
+void Renderer::clearColor(float r, float g, float b, float a) {
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rd.rtvHeap->GetCPUDescriptorHandleForHeapStart(), rd.frameIndex, rd.size);
+
+	rd.commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(rd.renderTargets[rd.frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+	const float clearColor[] = { 1, 0, 1, 1 };
+	rd.commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 }
