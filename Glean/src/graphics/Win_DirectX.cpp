@@ -29,7 +29,7 @@ Renderer::Renderer(HWND window) {
 	// Initialize the pipeline
 
 	ComPtr<IDXGIFactory4> factory;
-	CreateDXGIFactory1(IID_PPV_ARGS(&factory));
+	CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(&factory));
 
 #ifdef _DEBUG_PRINT_VIDEOCARDS
 	std::vector<IDXGIAdapter1*> adapters;
@@ -58,20 +58,26 @@ Renderer::Renderer(HWND window) {
 
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
 	ZeroMemory(&swapChainDesc, sizeof(swapChainDesc));
-	swapChainDesc.BufferCount = NUM_FRAMEBUFFERS; // Tripple buffer
+	swapChainDesc.BufferCount = NUM_FRAMEBUFFERS;
 	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	swapChainDesc.SampleDesc.Count = 1;
-	swapChainDesc.Scaling = DXGI_SCALING_NONE;
-	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+	swapChainDesc.SampleDesc.Quality = 0;
+	swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
+	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
+	swapChainDesc.Stereo = FALSE;
+	swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+
+	DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullscreenDesc = {};
+	fullscreenDesc.Windowed = TRUE;
 
 	ComPtr<IDXGISwapChain1> tmpSwapChain;
-	res = factory->CreateSwapChainForHwnd(commandQueue.Get(), window, &swapChainDesc, nullptr, nullptr, &tmpSwapChain);
+	res = factory->CreateSwapChainForHwnd(commandQueue.Get(), window, &swapChainDesc, &fullscreenDesc, nullptr, &tmpSwapChain);
 	if (res < 0) printf("[ERROR] Error creating a swap chain for DirectX %.08X\n", res);
 
 	ComPtr<IDXGISwapChain3> swapChain;
-	if(!tmpSwapChain.As(&swapChain)) printf("[ERROR] Error creating a IDXGISwapChain3 for DirectX (Was NULL after casting)\n");
+	if(tmpSwapChain.As(&swapChain) < 0) printf("[ERROR] Error creating a IDXGISwapChain3 for DirectX (Was NULL after casting)\n");
 	UINT currentBuffer = swapChain->GetCurrentBackBufferIndex();
 
 

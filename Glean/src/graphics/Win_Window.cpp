@@ -50,6 +50,9 @@ Window::Window() {
 		return;
 	}
 
+	ShowWindow(window, SW_SHOW);
+	UpdateWindow(window);
+
 	Sleep(1000);
 	renderer = new Renderer(window);
 
