@@ -5,6 +5,11 @@ VisualStudioVersion = 15.0.28010.2026
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Glean", "Glean\Glean.vcxproj", "{9E7AB34B-78D3-47DC-9EC1-1E16606739AF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sandbox", "Sandbox\Sandbox.vcxproj", "{1D82200C-1276-4E2B-A299-69403D8979E9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9E7AB34B-78D3-47DC-9EC1-1E16606739AF} = {9E7AB34B-78D3-47DC-9EC1-1E16606739AF}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +26,14 @@ Global
 		{9E7AB34B-78D3-47DC-9EC1-1E16606739AF}.Release|x64.Build.0 = Release|x64
 		{9E7AB34B-78D3-47DC-9EC1-1E16606739AF}.Release|x86.ActiveCfg = Release|Win32
 		{9E7AB34B-78D3-47DC-9EC1-1E16606739AF}.Release|x86.Build.0 = Release|Win32
+		{1D82200C-1276-4E2B-A299-69403D8979E9}.Debug|x64.ActiveCfg = Debug|x64
+		{1D82200C-1276-4E2B-A299-69403D8979E9}.Debug|x64.Build.0 = Debug|x64
+		{1D82200C-1276-4E2B-A299-69403D8979E9}.Debug|x86.ActiveCfg = Debug|Win32
+		{1D82200C-1276-4E2B-A299-69403D8979E9}.Debug|x86.Build.0 = Debug|Win32
+		{1D82200C-1276-4E2B-A299-69403D8979E9}.Release|x64.ActiveCfg = Release|x64
+		{1D82200C-1276-4E2B-A299-69403D8979E9}.Release|x64.Build.0 = Release|x64
+		{1D82200C-1276-4E2B-A299-69403D8979E9}.Release|x86.ActiveCfg = Release|Win32
+		{1D82200C-1276-4E2B-A299-69403D8979E9}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
