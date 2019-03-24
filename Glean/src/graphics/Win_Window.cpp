@@ -59,3 +59,13 @@ Window::Window() {
 	// Done, so call init
 	init();
 }
+
+bool Window::fetchEvents() {
+	MSG msg;
+	bool a = GetMessage(&msg, window, 0, 0) > 0;
+	if (!a) return false;
+	TranslateMessage(&msg);
+	DispatchMessage(&msg);
+
+	return true;
+}

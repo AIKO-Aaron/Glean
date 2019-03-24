@@ -20,9 +20,15 @@ typedef struct {
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvHeap;
 	Microsoft::WRL::ComPtr<ID3D12Resource> renderTargets[NUM_FRAMEBUFFERS];
+	Microsoft::WRL::ComPtr<ID3D12Fence> fence;
+	HANDLE fenceEvent;
+
+	D3D12_VIEWPORT viewport;
+	D3D12_RECT scissorRect;
 
 	UINT size;
 	UINT frameIndex;
+	UINT64 fenceValue;
 } __rendererData;
 
 #elif defined(__APPLE__)
@@ -41,8 +47,8 @@ namespace graphics {
 		Renderer(__internalWindow window);
 
 		void swapBuffers();
+		void synchronize(); // Wait for frame to render (maybe not needed for every renderer)
 		void clearColor(float r, float g, float b, float a);
-
 	};
 
 }

@@ -108,32 +108,72 @@ Renderer::Renderer(HWND window) {
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 	psoDesc.pRootSignature = rd.rootSignature.Get();
+	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	psoDesc.DepthStencilState.DepthEnable = FALSE;
+	psoDesc.DepthStencilState.StencilEnable = FALSE;
+	psoDesc.SampleMask = UINT_MAX;
+	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	psoDesc.NumRenderTargets = 1;
+	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+	psoDesc.SampleDesc.Count = 1;
 
 	device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&rd.pipelineState));
 
 	device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, rd.commandAllocator.Get(), rd.pipelineState.Get(), IID_PPV_ARGS(&rd.commandList));
 	rd.commandList->Close();
+
+	// TODO: Create vertex buffers
+
+	// Synchronization stuff
+	device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&rd.fence));
+	rd.fenceValue = 1;
+
+	rd.fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	if (rd.fenceEvent == nullptr) printf("[ERROR] Couldn't create an empty event for DirectX\n");
+
+	synchronize();
+}
+
+void Renderer::synchronize() {
+	const UINT64 fenceVal = rd.fenceValue;
+	rd.commandQueue->Signal(rd.fence.Get(), fenceVal);
+	++rd.fenceValue;
+	if (rd.fence->GetCompletedValue() < fenceVal) {
+		rd.fence->SetEventOnCompletion(fenceVal, rd.fenceEvent);
+		WaitForSingleObject(rd.fenceEvent, INFINITE);
+	}
+
+	rd.frameIndex = rd.swapChain->GetCurrentBackBufferIndex();
 }
 
 void Renderer::swapBuffers() {
+	rd.commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(rd.renderTargets[rd.frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+	rd.commandList->Close();
+
 	// Execute commands in queue
 	ID3D12CommandList* ppCommandLists[] = { rd.commandList.Get() };
 	rd.commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
 	// Swap buffers
 	rd.swapChain->Present(1, 0);
+	synchronize();
 
 	rd.commandAllocator->Reset();
 	rd.commandList->Reset(rd.commandAllocator.Get(), rd.pipelineState.Get());
 
 	rd.commandList->SetGraphicsRootSignature(rd.rootSignature.Get());
+	rd.commandList->RSSetViewports(1, &rd.viewport);
+	rd.commandList->RSSetScissorRects(1, &rd.scissorRect);
+
 }
 
 void Renderer::clearColor(float r, float g, float b, float a) {
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rd.rtvHeap->GetCPUDescriptorHandleForHeapStart(), rd.frameIndex, rd.size);
+	rd.commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
 	rd.commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(rd.renderTargets[rd.frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	const float clearColor[] = { 1, 0, 1, 1 };
+	const float clearColor[] = { r, g, b, a };
 	rd.commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 }
