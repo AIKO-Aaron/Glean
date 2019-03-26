@@ -3,11 +3,12 @@
 using namespace graphics;
 
 void Window::init() {
-
+    renderer = new Renderer(window);
 }
 
 void Window::loop() {
-	while (fetchEvents()) {
+    running = true;
+	while (running && fetchEvents()) {
 		for (renderFunc rf : renderFunctions) rf(renderer);
 	}
 }

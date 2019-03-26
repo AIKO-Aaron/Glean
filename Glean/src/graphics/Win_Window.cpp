@@ -2,9 +2,7 @@
  * Native implementation of window specific functions for windows
  */
 
-#ifndef _WIN32
-#  error This Source file should only be compiled on windows!
-#endif
+#ifdef _WIN32
 
 #include "Window.h"
 #include <Windows.h>
@@ -54,7 +52,6 @@ Window::Window() {
 	UpdateWindow(window);
 
 	Sleep(1000);
-	renderer = new Renderer(window);
 
 	// Done, so call init
 	init();
@@ -69,3 +66,7 @@ bool Window::fetchEvents() {
 
 	return true;
 }
+
+void Window::start() { loop(); }
+
+#endif

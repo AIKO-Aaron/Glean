@@ -15,6 +15,7 @@ namespace graphics {
 		bool fetchEvents();
 	public:
 		Window();
+        bool running = false;
 
 		inline void addRenderFunc(renderFunc rf) { renderFunctions.push_back(rf); }
 		inline Renderer *getRenderer() { return renderer; }
@@ -22,6 +23,7 @@ namespace graphics {
 
 		void init();
 		void loop();
+        void start();
 	};
 
 }

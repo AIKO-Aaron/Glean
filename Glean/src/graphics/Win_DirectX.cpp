@@ -1,6 +1,4 @@
-#ifndef _WIN32
-#  error This Source file should only be compiled on windows!
-#endif
+#ifdef _WIN32
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -177,3 +175,5 @@ void Renderer::clearColor(float r, float g, float b, float a) {
 	const float clearColor[] = { r, g, b, a };
 	rd.commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 }
+
+#endif

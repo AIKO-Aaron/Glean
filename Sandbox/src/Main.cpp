@@ -16,5 +16,5 @@ int main(int argc, char **args) {
 
 	Window w;
 	w.addRenderFunc(render);
-	w.loop();
+	w.start();
 }
