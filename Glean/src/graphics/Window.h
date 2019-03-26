@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Renderer.h"
+#include <chrono>
+#include <thread>
 
 namespace graphics {
 
