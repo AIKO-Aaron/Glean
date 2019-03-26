@@ -28,12 +28,10 @@
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
-    printf("Window will close now...\n");
     window->running = false;
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
-    printf("Window is now focused\n");
 }
 
 @end
@@ -61,8 +59,6 @@
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
-    if(!window) printf("Window = NULL");
-    printf("Hello world! The application is running now\n");
     window->loop();
 }
 
@@ -75,7 +71,6 @@
 using namespace graphics;
 
 Window::Window() {
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     [NSApplication sharedApplication];
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
     
@@ -99,7 +94,7 @@ Window::Window() {
     WindowDelegate *windowDelegate = [[WindowDelegate alloc] initWithWindow:this];
     window.delegate = windowDelegate;
     window.opaque = false;
-    window.level = 1;
+    //window.level = 1;
     
     const char* title = "Hello World";
     [window setTitle:static_cast<NSString* _Nonnull>([NSString stringWithUTF8String:title])];

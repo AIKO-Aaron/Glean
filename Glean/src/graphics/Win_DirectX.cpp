@@ -35,21 +35,21 @@ Renderer::Renderer(HWND window) {
 		adapters.push_back(hardwareAdapter);
 		DXGI_ADAPTER_DESC desc;
 		hardwareAdapter->GetDesc(&desc);
-		printf("Another adapter found: %S\n", desc.Description);
+		printf("[GLEAN][INFO] Another adapter found: %S\n", desc.Description);
 		++i;
 	}
 #endif
 
 	ComPtr<ID3D12Device> device;
 	res = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&device)); // Use default video card
-	if (res < 0) printf("[ERROR] Error creating a device for DirectX\n");
+	if (res < 0) printf("[GLEAN][ERROR] Error creating a device for DirectX\n");
 
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
 	res = device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&rd.commandQueue));
-	if (res < 0) printf("[ERROR] Error creating a commandqueuedesc for DirectX\n");
+	if (res < 0) printf("[GLEAN][ERROR] Error creating a commandqueuedesc for DirectX\n");
 
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
 	ZeroMemory(&swapChainDesc, sizeof(swapChainDesc));
@@ -69,9 +69,9 @@ Renderer::Renderer(HWND window) {
 
 	ComPtr<IDXGISwapChain1> tmpSwapChain;
 	res = factory->CreateSwapChainForHwnd(rd.commandQueue.Get(), window, &swapChainDesc, &fullscreenDesc, nullptr, &tmpSwapChain);
-	if (res < 0) printf("[ERROR] Error creating a swap chain for DirectX %.08X\n", res);
+	if (res < 0) printf("[GLEAN][ERROR] Error creating a swap chain for DirectX %.08X\n", res);
 
-	if(tmpSwapChain.As(&rd.swapChain) < 0) printf("[ERROR] Error creating a IDXGISwapChain3 for DirectX (Was NULL after casting)\n");
+	if(tmpSwapChain.As(&rd.swapChain) < 0) printf("[GLEAN][ERROR] Error creating a IDXGISwapChain3 for DirectX (Was NULL after casting)\n");
 	rd.frameIndex = rd.swapChain->GetCurrentBackBufferIndex();
 
 
@@ -91,7 +91,7 @@ Renderer::Renderer(HWND window) {
 	}
 
 	res = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&rd.commandAllocator));
-	if (res < 0) printf("[ERROR] Error creating a command allocator for DirectX\n");
+	if (res < 0) printf("[GLEAN][ERROR] Error creating a command allocator for DirectX\n");
 
 	/**
 	*	Now for the assets:
@@ -128,7 +128,7 @@ Renderer::Renderer(HWND window) {
 	rd.fenceValue = 1;
 
 	rd.fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-	if (rd.fenceEvent == nullptr) printf("[ERROR] Couldn't create an empty event for DirectX\n");
+	if (rd.fenceEvent == nullptr) printf("[GLEAN][ERROR] Couldn't create an empty event for DirectX\n");
 
 	synchronize();
 }

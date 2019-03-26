@@ -28,6 +28,8 @@
 
 @end
 
+id<MTLDrawable> lastDrawn = nil;
+
 #include "Renderer.h"
 using namespace graphics;
 
@@ -53,6 +55,9 @@ Renderer::Renderer(__internalWindow window) {
 
 void Renderer::swapBuffers() {
     MTKView *view = [((NSWindow*) rd.window) contentView];
+    
+    if(view.currentDrawable == lastDrawn) return;
+    else lastDrawn = view.currentDrawable;
     
     [CMD_ENC endEncoding];
     [CMD_BUF presentDrawable: view.currentDrawable];

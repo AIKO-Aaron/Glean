@@ -44,7 +44,7 @@ Window::Window() {
 
 	window = CreateWindow(WINDOWCLASS_NAME, "Hello World", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 960, 540, nullptr, nullptr, currentProgramInstance, nullptr);
 	if (!window) {
-		printf("[ERROR] Error creating window!\n");
+		printf("[GLEAN][ERROR] Error creating window!\n");
 		return;
 	}
 
